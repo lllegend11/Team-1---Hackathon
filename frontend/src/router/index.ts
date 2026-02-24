@@ -50,6 +50,14 @@ const router = createRouter({
 					route: '/dtcc-results'
 				}
 			}
+		},
+		{
+			path: '/carrier-admin',
+			component: () => import('@/pages/carrier/CarrierAdmin.vue')
+		},
+		{
+			path: '/carrier-admin/:carrier',
+			component: () => import('@/pages/carrier/CarrierAdmin.vue')
 		}
 	],
 })
