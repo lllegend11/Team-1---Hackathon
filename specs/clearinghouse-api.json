@@ -6,16 +6,16 @@
     "version": "1.0.0",
     "contact": {
       "name": "Clearinghouse API Team",
-      "email": "api-support@clearinghouse.com"
+      "email": "api-support@example.com"
     }
   },
   "servers": [
     {
-      "url": "https://api.clearinghouse.com/v1",
+      "url": "https://api.example.com/v1",
       "description": "Production server"
     },
     {
-      "url": "https://api-staging.clearinghouse.com/v1",
+      "url": "https://api-staging.example.com/v1",
       "description": "Staging server"
     }
   ],
@@ -322,40 +322,83 @@
       "ManifestRequest": {
         "type": "object",
         "required": [
-          "transaction-id",
-          "receiving-broker-id",
-          "delivering-broker-id",
-          "account-number",
-          "policy-ids"
+          "manifest-request"
         ],
         "properties": {
-          "transaction-id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique transaction identifier"
-          },
-          "receiving-broker-id": {
-            "type": "string",
-            "description": "Identifier of the receiving broker-dealer"
-          },
-          "delivering-broker-id": {
-            "type": "string",
-            "description": "Identifier of the delivering broker-dealer"
-          },
-          "account-number": {
-            "type": "string",
-            "description": "Client account number"
-          },
-          "policy-ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of policy identifiers"
-          },
-          "additional-data": {
+          "manifest-request": {
             "type": "object",
-            "description": "Additional request data (open-ended)"
+            "required": [
+              "requesting-firm",
+              "client"
+            ],
+            "properties": {
+              "requesting-firm": {
+                "type": "object",
+                "required": [
+                  "firm-name",
+                  "firm-id",
+                  "servicing-agent"
+                ],
+                "properties": {
+                  "firm-name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of the requesting firm"
+                  },
+                  "firm-id": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Identifier of the requesting firm"
+                  },
+                  "servicing-agent": {
+                    "type": "object",
+                    "required": [
+                      "agent-name",
+                      "npn"
+                    ],
+                    "properties": {
+                      "agent-name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Name of the servicing agent"
+                      },
+                      "npn": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "National Producer Number of the agent"
+                      }
+                    }
+                  }
+                }
+              },
+              "client": {
+                "type": "object",
+                "required": [
+                  "client-name",
+                  "ssn",
+                  "contract-numbers"
+                ],
+                "properties": {
+                  "client-name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Name of the client"
+                  },
+                  "ssn": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Social Security Number of the client"
+                  },
+                  "contract-numbers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of contract numbers for the client"
+                  }
+                }
+              }
+            }
           }
         }
       },

@@ -5,11 +5,11 @@ info:
   version: 1.0.0
   contact:
     name: Insurance Carrier API Team
-    email: api-support@insurance-carrier.com
+    email: api-support@example.com
 servers:
-  - url: https://api.insurance-carrier.com/v1
+  - url: https://api.example.com/v1
     description: Production server
-  - url: https://api-staging.insurance-carrier.com/v1
+  - url: https://api-staging.example.com/v1
     description: Staging server
 
 paths:
