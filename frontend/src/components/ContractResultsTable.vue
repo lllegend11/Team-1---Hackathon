@@ -11,8 +11,6 @@ const props = defineProps<{
 	records: ContractRecord[]
 }>()
 
-const selectedRecords = defineModel<ContractRecord[]>('selectedRecords', { default: [] })
-
 const sortColumn = ref<SortableColumn | null>(null)
 const sortDirection = ref<SortDirection>('asc')
 
@@ -37,31 +35,21 @@ const sortedRecords = computed(() => {
 })
 
 const allSelected = computed(() => {
-	return props.records.length > 0 && selectedRecords.value.length === props.records.length
+	return props.records.length > 0 && props.records.every(r => r.selected)
 })
 
 const someSelected = computed(() => {
-	return selectedRecords.value.length > 0 && selectedRecords.value.length < props.records.length
+	const selectedCount = props.records.filter(r => r.selected).length
+	return selectedCount > 0 && selectedCount < props.records.length
 })
 
 function toggleSelectAll() {
-	if (allSelected.value) {
-		selectedRecords.value = []
-	} else {
-		selectedRecords.value = [...props.records]
-	}
-}
-
-function isSelected(record: ContractRecord) {
-	return selectedRecords.value.some(r => r.id === record.id)
+	const newValue = !allSelected.value
+	props.records.forEach(r => r.selected = newValue)
 }
 
 function toggleSelect(record: ContractRecord) {
-	if (isSelected(record)) {
-		selectedRecords.value = selectedRecords.value.filter(r => r.id !== record.id)
-	} else {
-		selectedRecords.value = [...selectedRecords.value, record]
-	}
+	record.selected = !record.selected
 }
 
 function getStatusBadgeType(status: ContractStatus): 'green' | 'yellow' | 'red' {
@@ -158,7 +146,7 @@ function getStatusBadgeType(status: ContractStatus): 'green' | 'yellow' | 'red' 
 					>
 						<td class="px-6 py-4">
 							<FwbCheckbox
-								:model-value="isSelected(record)"
+								:model-value="record.selected"
 								@update:model-value="toggleSelect(record)"
 							/>
 						</td>

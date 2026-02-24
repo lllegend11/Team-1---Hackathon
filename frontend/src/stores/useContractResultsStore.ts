@@ -44,6 +44,11 @@ export const useContractResultsStore = defineStore('contractResults', () => {
 		searchContracts.value.push(createEmptyContract())
 	}
 
+	function removeSearchContract(id: string | number) {
+		if (searchContracts.value.length < 2) return
+		searchContracts.value = searchContracts.value.filter(c => c.id !== id)
+	}
+
 	async function initiateDtccSearch(): Promise<void> {
 		const loaderStore = useLoaderStore()
 		loaderStore.open('Searching DTCC contracts...')
@@ -61,7 +66,8 @@ export const useContractResultsStore = defineStore('contractResults', () => {
 				ownership: 'Individual',
 				trailing: true,
 				withdrawalProgram: true,
-				contractStatus: ContractStatus.Active
+				contractStatus: ContractStatus.Active,
+				dtccResolved: true
 			},
 			{
 				id: 2,
@@ -72,18 +78,20 @@ export const useContractResultsStore = defineStore('contractResults', () => {
 				ownership: 'Joint',
 				trailing: false,
 				withdrawalProgram: true,
-				contractStatus: ContractStatus.ActiveRestricted
+				contractStatus: ContractStatus.ActiveRestricted,
+				dtccResolved: false
 			},
 			{
 				id: 3,
-				carrierName: 'Jackson National',
-				productName: 'Perspective II',
+				carrierName: '',
+				productName: '',
 				contractNumber: 'JNL-2022-009012',
-				cusipNumber: '469048AH8',
-				ownership: 'Individual',
+				cusipNumber: '',
+				ownership: '',
 				trailing: true,
 				withdrawalProgram: true,
-				contractStatus: ContractStatus.Inactive
+				contractStatus: ContractStatus.Inactive,
+				dtccResolved: false
 			}
 		]
 
@@ -135,6 +143,7 @@ export const useContractResultsStore = defineStore('contractResults', () => {
 		resetAll,
 		createEmptyContract,
 		addSearchContract,
+		removeSearchContract,
 		initiateDtccSearch,
 		initiateCarrierSearch
 	}

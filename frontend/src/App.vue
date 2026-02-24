@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { FwbButton } from 'flowbite-vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import AppLoader from '@/components/AppLoader.vue';
-import { useLoaderStore } from './stores/useLoaderStore';
+import type { RouteMeta } from '@/router';
 
 const route = useRoute()
+const router = useRouter()
+
+async function handleNavigation(meta: RouteMeta) {
+	if (meta.handler) {
+		await meta.handler()
+	}
+	router.push(meta.route)
+}
 </script>
 
 <template>
@@ -19,23 +27,17 @@ const route = useRoute()
 		</div>
 
 		<div class="flex w-full gap-4 justify-center items-center p-5">
-			<RouterLink
+			<FwbButton
 				v-if="route.meta.previous"
-				:to="route.meta.previous"
-			>
-				<FwbButton
-					color="default"
-				>Back</FwbButton>
-			</RouterLink>
+				color="default"
+				@click="handleNavigation(route.meta.previous as RouteMeta)"
+			>Back</FwbButton>
 
-			<RouterLink
+			<FwbButton
 				v-if="route.meta.next"
-				:to="route.meta.next"
-			>
-				<FwbButton
-					color="default"
-				>Next</FwbButton>
-			</RouterLink>
+				color="default"
+				@click="handleNavigation(route.meta.next as RouteMeta)"
+			>Next</FwbButton>
 		</div>
 	</div>
 </template>

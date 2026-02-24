@@ -3,6 +3,7 @@ import { FwbButton, FwbHeading, FwbInput } from 'flowbite-vue';
 import BarcodeIcon from '@/icons/BarcodeIcon.svg'
 import UserIcon from '@/icons/UserIcon.svg'
 import ProfileCardIcon from '@/icons/ProfileCardIcon.svg'
+import CloseIcon from '@/icons/CloseIcon.svg'
 import { useContractResultsStore } from '@/stores/useContractResultsStore';
 import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
@@ -53,7 +54,7 @@ if (searchContracts.value.length === 0) {
 						</template>
 
 						<template #suffix>
-							<button></button>
+							<button class="cursor-pointer" @click="contractResultsStore.removeSearchContract(contract.id)"><CloseIcon /></button>
 						</template>
 					</FwbInput>
 				</div>

@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useContractResultsStore } from '@/stores/useContractResultsStore'
 
+export interface RouteMeta {
+	route: string
+	handler?: () => Promise<void> | void
+}
+
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [
@@ -12,30 +17,38 @@ const router = createRouter({
 			path: '/initiate-exchange',
 			component: () => import('@/pages/InitiateExchange.vue'),
 			meta: {
-				next: '/dtcc-results'
+				next: {
+					route: '/dtcc-results',
+					handler: async () => {
+						const contractResultsStore = useContractResultsStore()
+						await contractResultsStore.initiateDtccSearch()
+					}
+				}
 			}
 		},
 		{
 			path: '/dtcc-results',
 			component: () => import('@/pages/DtccResults.vue'),
 			meta: {
-				next: '/carrier-results',
-				previous: '/initiate-exchange'
-			},
-			beforeEnter: async () => {
-				const contractResultsStore = useContractResultsStore()
-				await contractResultsStore.initiateDtccSearch()
+				next: {
+					route: '/carrier-results',
+					handler: async () => {
+						const contractResultsStore = useContractResultsStore()
+						await contractResultsStore.initiateCarrierSearch()
+					}
+				},
+				previous: {
+					route: '/initiate-exchange'
+				}
 			}
 		},
 		{
 			path: '/carrier-results',
 			component: () => import('@/pages/CarrierResults.vue'),
 			meta: {
-				previous: '/dtcc-results'
-			},
-			beforeEnter: async () => {
-				const contractResultsStore = useContractResultsStore()
-				await contractResultsStore.initiateCarrierSearch()
+				previous: {
+					route: '/dtcc-results'
+				}
 			}
 		},
 		{
