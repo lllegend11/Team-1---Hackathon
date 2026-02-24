@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Broker-Dealer API
+  description: API for broker-dealers (both receiving and delivering) to handle requests and notifications in the BD change process
+  version: 1.0.0
+  contact:
+    name: Broker-Dealer API Team
+    email: api-support@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://api-staging.example.com/v1
+    description: Staging server
+
+paths:
+  /receive-manifest-request:
+    post:
+      summary: Receive manifest request from clearinghouse
+      description: Accept manifest request from clearinghouse to provide policy information for specified accounts (delivering broker only)
+      operationId: receiveManifestRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManifestRequest'
+      responses:
+        '200':
+          description: Manifest request received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-bd-change-response:
+    post:
+      summary: Receive BD change response from clearinghouse
+      description: Accept carrier validation response forwarded from clearinghouse (receiving broker only)
+      operationId: receiveBdChangeResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BdChangeResponse'
+      responses:
+        '200':
+          description: BD change response received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-transfer-notification:
+    post:
+      summary: Receive transfer notification from clearinghouse
+      description: Accept transfer-related notifications from clearinghouse
+      operationId: receiveTransferNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferNotification'
+      responses:
+        '200':
+          description: Transfer notification received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /query-status/{transaction-id}:
+    get:
+      summary: Query transaction status
+      description: Retrieve current status and history for a specific transaction
+      operationId: queryTransactionStatus
+      parameters:
+        - name: transaction-id
+          in: path
+          required: true
+          description: Unique transaction identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatus'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ManifestRequest:
+      type: object
+      required:
+        - manifest-request
+      properties:
+        manifest-request:
+          type: object
+          required:
+            - requesting-firm
+            - client
+          properties:
+            requesting-firm:
+              type: object
+              required:
+                - firm-name
+                - firm-id
+                - servicing-agent
+              properties:
+                firm-name:
+                  type: string
+                  nullable: true
+                  description: Name of the requesting firm
+                firm-id:
+                  type: string
+                  nullable: true
+                  description: Identifier of the requesting firm
+                servicing-agent:
+                  type: object
+                  required:
+                    - agent-name
+                    - npn
+                  properties:
+                    agent-name:
+                      type: string
+                      nullable: true
+                      description: Name of the servicing agent
+                    npn:
+                      type: string
+                      nullable: true
+                      description: National Producer Number of the agent
+            client:
+              type: object
+              required:
+                - client-name
+                - ssn
+                - contract-numbers
+              properties:
+                client-name:
+                  type: string
+                  nullable: true
+                  description: Name of the client
+                ssn:
+                  type: string
+                  nullable: true
+                  description: Social Security Number of the client
+                contract-numbers:
+                  type: array
+                  items:
+                    type: string
+                  description: List of contract numbers for the client
+
+    BdChangeResponse:
+      type: object
+      required:
+        - transaction-id
+        - carrier-id
+        - policy-id
+        - validation-result
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        carrier-id:
+          type: string
+          description: Identifier of the insurance carrier
+        policy-id:
+          type: string
+          description: Policy identifier
+        validation-result:
+          type: string
+          enum: [approved, rejected]
+          description: Carrier validation result
+        rejection-reason:
+          type: string
+          description: Reason for rejection (if applicable)
+        approval-details:
+          type: object
+          description: Additional approval information (open-ended)
+        response-timestamp:
+          type: string
+          format: date-time
+          description: When the response was received
+        additional-data:
+          type: object
+          description: Additional response data (open-ended)
+
+    TransferNotification:
+      type: object
+      required:
+        - transaction-id
+        - notification-type
+        - policy-id
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        notification-type:
+          type: string
+          enum: [transfer-approved, transfer-initiated, transfer-confirmed, transfer-complete]
+          description: Type of transfer notification
+        policy-id:
+          type: string
+          description: Policy identifier
+        receiving-broker-id:
+          type: string
+          description: Identifier of the receiving broker-dealer
+        delivering-broker-id:
+          type: string
+          description: Identifier of the delivering broker-dealer
+        carrier-id:
+          type: string
+          description: Identifier of the insurance carrier
+        notification-timestamp:
+          type: string
+          format: date-time
+          description: When the notification was sent
+        additional-data:
+          type: object
+          description: Additional notification data (open-ended)
+
+    TransactionStatus:
+      type: object
+      required:
+        - transaction-id
+        - current-status
+        - created-at
+        - updated-at
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        current-status:
+          type: string
+          enum: 
+            - MANIFEST_REQUESTED
+            - MANIFEST_RECEIVED
+            - DUE_DILIGENCE_COMPLETE
+            - CARRIER_VALIDATION_PENDING
+            - CARRIER_APPROVED
+            - CARRIER_REJECTED
+            - TRANSFER_INITIATED
+            - TRANSFER_PROCESSING
+            - TRANSFER_CONFIRMED
+            - COMPLETE
+          description: Current transaction status
+        status-history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryItem'
+          description: History of status changes
+        created-at:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+        updated-at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        broker-role:
+          type: string
+          enum: [receiving, delivering]
+          description: Role of this broker in the transaction
+        additional-data:
+          type: object
+          description: Additional status data (open-ended)
+
+    StatusHistoryItem:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Status value
+        timestamp:
+          type: string
+          format: date-time
+          description: When status was set
+        notes:
+          type: string
+          description: Additional notes about status change
+
+    StandardResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+        message:
+          type: string
+          description: Response message
+        transaction-id:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        processing-status:
+          type: string
+          enum: [received, processing, deferred]
+          description: How the request will be handled
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error-code
+        - error-message
+      properties:
+        success:
+          type: boolean
+          example: false
+          description: Always false for errors
+        error-code:
+          type: string
+          description: Error code
+        error-message:
+          type: string
+          description: Human-readable error message
+        transaction-id:
+          type: string
+          format: uuid
+          description: Transaction identifier (if available)
+
+  # Note: Outbound API calls that broker-dealers make to clearinghouse are documented separately
+  # These would include:
+  # - POST to clearinghouse /receive-manifest-request (from receiving broker)
+  # - POST to clearinghouse /receive-manifest-response (from delivering broker)
+  # - POST to clearinghouse /receive-bd-change-request (from receiving broker)
+  # - POST to clearinghouse /receive-transfer-confirmation (from delivering broker)

@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Clearinghouse API
+  description: API for the clearinghouse to receive requests and responses from broker-dealers and insurance carriers in the BD change process
+  version: 1.0.0
+  contact:
+    name: Clearinghouse API Team
+    email: api-support@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://api-staging.example.com/v1
+    description: Staging server
+
+paths:
+  /receive-manifest-request:
+    post:
+      summary: Receive manifest request from receiving broker
+      description: Accept manifest request containing client account list from receiving broker-dealer
+      operationId: receiveManifestRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManifestRequest'
+      responses:
+        '200':
+          description: Manifest request received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-manifest-response:
+    post:
+      summary: Receive manifest response from delivering broker
+      description: Accept policy list response from delivering broker-dealer
+      operationId: receiveManifestResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManifestResponse'
+      responses:
+        '200':
+          description: Manifest response received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-bd-change-request:
+    post:
+      summary: Receive BD change request from receiving broker
+      description: Accept BD change request for specific policies from receiving broker-dealer
+      operationId: receiveBdChangeRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BdChangeRequest'
+      responses:
+        '200':
+          description: BD change request received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-carrier-response:
+    post:
+      summary: Receive carrier validation response
+      description: Accept validation response (approval/rejection) from insurance carrier
+      operationId: receiveCarrierResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarrierResponse'
+      responses:
+        '200':
+          description: Carrier response received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-transfer-confirmation:
+    post:
+      summary: Receive transfer confirmation from delivering broker
+      description: Accept transfer confirmation from delivering broker-dealer
+      operationId: receiveTransferConfirmation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferConfirmation'
+      responses:
+        '200':
+          description: Transfer confirmation received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /query-status/{transaction-id}:
+    get:
+      summary: Query transaction status
+      description: Retrieve current status and history for a specific transaction
+      operationId: queryTransactionStatus
+      parameters:
+        - name: transaction-id
+          in: path
+          required: true
+          description: Unique transaction identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatus'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ManifestRequest:
+      type: object
+      required:
+        - manifest-request
+      properties:
+        manifest-request:
+          type: object
+          required:
+            - requesting-firm
+            - client
+          properties:
+            requesting-firm:
+              type: object
+              required:
+                - firm-name
+                - firm-id
+                - servicing-agent
+              properties:
+                firm-name:
+                  type: string
+                  nullable: true
+                  description: Name of the requesting firm
+                firm-id:
+                  type: string
+                  nullable: true
+                  description: Identifier of the requesting firm
+                servicing-agent:
+                  type: object
+                  required:
+                    - agent-name
+                    - npn
+                  properties:
+                    agent-name:
+                      type: string
+                      nullable: true
+                      description: Name of the servicing agent
+                    npn:
+                      type: string
+                      nullable: true
+                      description: National Producer Number of the agent
+            client:
+              type: object
+              required:
+                - client-name
+                - ssn
+                - contract-numbers
+              properties:
+                client-name:
+                  type: string
+                  nullable: true
+                  description: Name of the client
+                ssn:
+                  type: string
+                  nullable: true
+                  description: Social Security Number of the client
+                contract-numbers:
+                  type: array
+                  items:
+                    type: string
+                  description: List of contract numbers for the client
+
+    ManifestResponse:
+      type: object
+      required:
+        - transaction-id
+        - delivering-broker-id
+        - response-type
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        delivering-broker-id:
+          type: string
+          description: Identifier of the delivering broker-dealer
+        response-type:
+          type: string
+          enum: [immediate, deferred]
+          description: Type of response (immediate with data or deferred)
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyDetails'
+          description: Policy details (present for immediate responses)
+        additional-data:
+          type: object
+          description: Additional response data (open-ended)
+
+    BdChangeRequest:
+      type: object
+      required:
+        - transaction-id
+        - receiving-broker-id
+        - carrier-id
+        - policy-id
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        receiving-broker-id:
+          type: string
+          description: Identifier of the receiving broker-dealer
+        carrier-id:
+          type: string
+          description: Identifier of the insurance carrier
+        policy-id:
+          type: string
+          description: Policy identifier
+        additional-data:
+          type: object
+          description: Additional request data (open-ended)
+
+    CarrierResponse:
+      type: object
+      required:
+        - transaction-id
+        - carrier-id
+        - policy-id
+        - validation-result
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        carrier-id:
+          type: string
+          description: Identifier of the insurance carrier
+        policy-id:
+          type: string
+          description: Policy identifier
+        validation-result:
+          type: string
+          enum: [approved, rejected]
+          description: Validation result
+        rejection-reason:
+          type: string
+          description: Reason for rejection (if applicable)
+        additional-data:
+          type: object
+          description: Additional response data (open-ended)
+
+    TransferConfirmation:
+      type: object
+      required:
+        - transaction-id
+        - delivering-broker-id
+        - policy-id
+        - confirmation-status
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        delivering-broker-id:
+          type: string
+          description: Identifier of the delivering broker-dealer
+        policy-id:
+          type: string
+          description: Policy identifier
+        confirmation-status:
+          type: string
+          enum: [confirmed, failed]
+          description: Transfer confirmation status
+        additional-data:
+          type: object
+          description: Additional confirmation data (open-ended)
+
+    PolicyDetails:
+      type: object
+      required:
+        - policy-id
+      properties:
+        policy-id:
+          type: string
+          description: Policy identifier
+        policy-type:
+          type: string
+          description: Type of policy (annuity, insurance, etc.)
+        policy-data:
+          type: object
+          description: Detailed policy information (open-ended)
+
+    TransactionStatus:
+      type: object
+      required:
+        - transaction-id
+        - current-status
+        - created-at
+        - updated-at
+      properties:
+        transaction-id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        current-status:
+          type: string
+          enum: 
+            - MANIFEST_REQUESTED
+            - MANIFEST_RECEIVED
+            - DUE_DILIGENCE_COMPLETE
+            - CARRIER_VALIDATION_PENDING
+            - CARRIER_APPROVED
+            - CARRIER_REJECTED
+            - TRANSFER_INITIATED
+            - TRANSFER_PROCESSING
+            - TRANSFER_CONFIRMED
+            - COMPLETE
+          description: Current transaction status
+        status-history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryItem'
+          description: History of status changes
+        created-at:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+        updated-at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        additional-data:
+          type: object
+          description: Additional status data (open-ended)
+
+    StatusHistoryItem:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Status value
+        timestamp:
+          type: string
+          format: date-time
+          description: When status was set
+        notes:
+          type: string
+          description: Additional notes about status change
+
+    StandardResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+        message:
+          type: string
+          description: Response message
+        transaction-id:
+          type: string
+          format: uuid
+          description: Transaction identifier
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error-code
+        - error-message
+      properties:
+        success:
+          type: boolean
+          example: false
+          description: Always false for errors
+        error-code:
+          type: string
+          description: Error code
+        error-message:
+          type: string
+          description: Human-readable error message
+        transaction-id:
+          type: string
+          format: uuid
+          description: Transaction identifier (if available)

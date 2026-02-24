@@ -1,0 +1,427 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Insurance Carrier API",
+    "description": "API for insurance carriers to handle BD change validation requests and notifications in the BD change process",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Insurance Carrier API Team",
+      "email": "api-support@example.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://api-staging.example.com/v1",
+      "description": "Staging server"
+    }
+  ],
+  "paths": {
+    "/receive-bd-change-request": {
+      "post": {
+        "summary": "Receive BD change validation request from clearinghouse",
+        "description": "Accept BD change validation request from clearinghouse to validate and approve/reject broker-dealer changes",
+        "operationId": "receiveBdChangeRequest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BdChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "BD change request received successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/receive-transfer-notification": {
+      "post": {
+        "summary": "Receive transfer notification from clearinghouse",
+        "description": "Accept final service agent change notification from clearinghouse",
+        "operationId": "receiveTransferNotification",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferNotification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer notification received successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query-status/{transaction-id}": {
+      "get": {
+        "summary": "Query transaction status",
+        "description": "Retrieve current status and history for a specific transaction",
+        "operationId": "queryTransactionStatus",
+        "parameters": [
+          {
+            "name": "transaction-id",
+            "in": "path",
+            "required": true,
+            "description": "Unique transaction identifier",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BdChangeRequest": {
+        "type": "object",
+        "required": [
+          "transaction-id",
+          "receiving-broker-id",
+          "delivering-broker-id",
+          "carrier-id",
+          "policy-id"
+        ],
+        "properties": {
+          "transaction-id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique transaction identifier"
+          },
+          "receiving-broker-id": {
+            "type": "string",
+            "description": "Identifier of the receiving broker-dealer"
+          },
+          "delivering-broker-id": {
+            "type": "string",
+            "description": "Identifier of the delivering broker-dealer"
+          },
+          "carrier-id": {
+            "type": "string",
+            "description": "Identifier of the insurance carrier"
+          },
+          "policy-id": {
+            "type": "string",
+            "description": "Policy identifier"
+          },
+          "policy-details": {
+            "type": "object",
+            "description": "Detailed policy information for validation"
+          },
+          "broker-details": {
+            "type": "object",
+            "description": "Receiving broker information for validation"
+          },
+          "validation-requirements": {
+            "type": "object",
+            "description": "Specific validation requirements (licensing, appointments, suitability, etc.)"
+          },
+          "request-timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the request was made"
+          },
+          "additional-data": {
+            "type": "object",
+            "description": "Additional request data (open-ended)"
+          }
+        }
+      },
+      "TransferNotification": {
+        "type": "object",
+        "required": [
+          "transaction-id",
+          "notification-type",
+          "policy-id",
+          "carrier-id"
+        ],
+        "properties": {
+          "transaction-id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique transaction identifier"
+          },
+          "notification-type": {
+            "type": "string",
+            "enum": ["service-agent-change-complete"],
+            "description": "Type of transfer notification"
+          },
+          "policy-id": {
+            "type": "string",
+            "description": "Policy identifier"
+          },
+          "carrier-id": {
+            "type": "string",
+            "description": "Identifier of the insurance carrier"
+          },
+          "receiving-broker-id": {
+            "type": "string",
+            "description": "Identifier of the new receiving broker-dealer"
+          },
+          "delivering-broker-id": {
+            "type": "string",
+            "description": "Identifier of the previous delivering broker-dealer"
+          },
+          "effective-date": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective date of the broker change"
+          },
+          "notification-timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the notification was sent"
+          },
+          "additional-data": {
+            "type": "object",
+            "description": "Additional notification data (open-ended)"
+          }
+        }
+      },
+      "TransactionStatus": {
+        "type": "object",
+        "required": [
+          "transaction-id",
+          "current-status",
+          "created-at",
+          "updated-at"
+        ],
+        "properties": {
+          "transaction-id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique transaction identifier"
+          },
+          "current-status": {
+            "type": "string",
+            "enum": [
+              "MANIFEST_REQUESTED",
+              "MANIFEST_RECEIVED",
+              "DUE_DILIGENCE_COMPLETE",
+              "CARRIER_VALIDATION_PENDING",
+              "CARRIER_APPROVED",
+              "CARRIER_REJECTED",
+              "TRANSFER_INITIATED",
+              "TRANSFER_PROCESSING",
+              "TRANSFER_CONFIRMED",
+              "COMPLETE"
+            ],
+            "description": "Current transaction status"
+          },
+          "status-history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusHistoryItem"
+            },
+            "description": "History of status changes"
+          },
+          "created-at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Transaction creation timestamp"
+          },
+          "updated-at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "carrier-validation-details": {
+            "type": "object",
+            "description": "Details about carrier validation process"
+          },
+          "policies-affected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of policy IDs affected in this transaction"
+          },
+          "additional-data": {
+            "type": "object",
+            "description": "Additional status data (open-ended)"
+          }
+        }
+      },
+      "StatusHistoryItem": {
+        "type": "object",
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Status value"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When status was set"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about status change"
+          }
+        }
+      },
+      "StandardResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "transaction-id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Transaction identifier"
+          },
+          "processing-status": {
+            "type": "string",
+            "enum": ["received", "processing", "deferred"],
+            "description": "How the request will be handled"
+          },
+          "estimated-response-time": {
+            "type": "string",
+            "description": "Estimated time for validation response (if deferred)"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "error-code",
+          "error-message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false,
+            "description": "Always false for errors"
+          },
+          "error-code": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "error-message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "transaction-id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Transaction identifier (if available)"
+          }
+        }
+      }
+    }
+  }
+}
