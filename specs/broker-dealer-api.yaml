@@ -13,20 +13,26 @@ servers:
     description: Staging server
 
 paths:
-  /receive-manifest-request:
+  /submit-policy-inquiry-request:
     post:
-      summary: Receive manifest request from clearinghouse
-      description: Accept manifest request from clearinghouse to provide policy information for specified accounts (delivering broker only)
-      operationId: receiveManifestRequest
+      summary: Receive policy inquiry request from clearinghouse
+      description: |
+        Accept policy inquiry request from clearinghouse to provide policy information for specified accounts (delivering broker only).
+        
+        **Response Behavior:**
+        - Broker can respond immediately with policy data (payload included) or defer processing (payload omitted)
+        - When deferred, only code/message/transactionId are returned
+        - Transaction ID must be reflected in any subsequent responses
+      operationId: submitPolicyInquiryRequest
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ManifestRequest'
+              $ref: '#/components/schemas/PolicyInquiryRequest'
       responses:
         '200':
-          description: Manifest request received successfully
+          description: Policy inquiry request received successfully
           content:
             application/json:
               schema:
@@ -44,20 +50,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /receive-bd-change-response:
+  /receive-policy-inquiry-response:
     post:
-      summary: Receive BD change response from clearinghouse
-      description: Accept carrier validation response forwarded from clearinghouse (receiving broker only)
-      operationId: receiveBdChangeResponse
+      summary: Receive policy inquiry response from clearinghouse
+      description: |
+        Accept policy inquiry response forwarded from clearinghouse (receiving broker only).
+        This endpoint receives the detailed policy information from the delivering broker via clearinghouse.
+        
+        **Response Behavior:**
+        - Responses may contain immediate policy data (payload included) or deferred processing notifications
+        - Transaction ID propagated from original request for tracking
+      operationId: receivePolicyInquiryResponse
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BdChangeResponse'
+              $ref: '#/components/schemas/PolicyInquiryResponse'
       responses:
         '200':
-          description: BD change response received successfully
+          description: Policy inquiry response received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request - invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /receive-bd-change-request:
+    post:
+      summary: Receive BD change request from clearinghouse
+      description: Accept BD change request forwarded from clearinghouse (receiving broker only)
+      operationId: receiveBdChangeRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BdChangeRequest'
+      responses:
+        '200':
+          description: BD change request received successfully
           content:
             application/json:
               schema:
@@ -141,6 +184,178 @@ paths:
 
 components:
   schemas:
+    PolicyInquiryRequest:
+      type: object
+      required:
+        - policy-inquiry-request
+      properties:
+        policy-inquiry-request:
+          type: object
+          required:
+            - requesting-firm
+            - client
+          properties:
+            requesting-firm:
+              type: object
+              required:
+                - firm-name
+                - firm-id
+                - servicing-agent
+              properties:
+                firm-name:
+                  type: string
+                  nullable: true
+                  description: Name of the requesting firm
+                firm-id:
+                  type: string
+                  nullable: true
+                  description: Identifier of the requesting firm
+                servicing-agent:
+                  type: object
+                  required:
+                    - agent-name
+                    - npn
+                  properties:
+                    agent-name:
+                      type: string
+                      nullable: true
+                      description: Name of the servicing agent
+                    npn:
+                      type: string
+                      nullable: true
+                      description: National Producer Number of the agent
+            client:
+              type: object
+              required:
+                - client-name
+                - ssn
+                - contract-numbers
+              properties:
+                client-name:
+                  type: string
+                  nullable: true
+                  description: Name of the client
+                ssn:
+                  type: string
+                  nullable: true
+                  description: Social Security Number of the client
+                contract-numbers:
+                  type: array
+                  items:
+                    type: string
+                  description: List of contract numbers for the client
+
+    PolicyInquiryResponse:
+      type: object
+      required:
+        - policy-inquiry-response
+      properties:
+        policy-inquiry-response:
+          type: object
+          required:
+            - client
+            - enums
+          properties:
+            client:
+              type: object
+              required:
+                - client-name
+                - ssn-last-4
+                - policies
+              properties:
+                client-name:
+                  type: string
+                  nullable: true
+                  description: Client name echoed back for confirmation
+                ssn-last-4:
+                  type: string
+                  nullable: true
+                  description: Last four digits of the client's SSN for security
+                policies:
+                  type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/DetailedPolicyInfo'
+                  description: Contract-number-keyed map of policy details
+            enums:
+              type: object
+              required:
+                - account-type
+                - plan-type
+              properties:
+                account-type:
+                  type: array
+                  items:
+                    type: string
+                    enum: [individual, joint, trust, custodial, entity]
+                  description: Valid account type values
+                plan-type:
+                  type: array
+                  items:
+                    type: string
+                    enum: [non-qualified, roth-ira, traditional-ira, sep, simple]
+                  description: Valid plan type values
+
+    DetailedPolicyInfo:
+      type: object
+      required:
+        - carrier-name
+        - account-type
+        - plan-type
+        - ownership
+        - product-name
+        - cusip
+        - trailing-commission
+        - contract-status
+        - withdrawal-structure
+        - errors
+      properties:
+        carrier-name:
+          type: string
+          nullable: true
+          description: Name of the insurance carrier that wrote the annuity
+        account-type:
+          type: string
+          enum: [individual, joint, trust, custodial, entity]
+          nullable: true
+          description: Registration type of the account
+        plan-type:
+          type: string
+          enum: [non-qualified, roth-ira, traditional-ira, sep, simple]
+          nullable: true
+          description: Tax qualification type of the account
+        ownership:
+          type: string
+          nullable: true
+          description: Ownership structure of the policy
+        product-name:
+          type: string
+          nullable: true
+          description: Name of the annuity product
+        cusip:
+          type: string
+          nullable: true
+          description: CUSIP identifier for the product
+        trailing-commission:
+          type: boolean
+          description: Whether trailing commission will apply to the new servicing agent
+        contract-status:
+          type: string
+          nullable: true
+          description: Current status of the contract
+        withdrawal-structure:
+          type: object
+          required:
+            - systematic-in-place
+          properties:
+            systematic-in-place:
+              type: boolean
+              description: Whether a systematic withdrawal plan is currently active
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyError'
+          description: Any errors or issues associated with this policy
+
     ManifestRequest:
       type: object
       required:
@@ -202,28 +417,48 @@ components:
                     type: string
                   description: List of contract numbers for the client
 
-    BdChangeResponse:
+    BdChangeRequest:
       type: object
       required:
         - transaction-id
+        - receiving-broker-id
+        - delivering-broker-id
         - carrier-id
         - policy-id
-        - validation-result
       properties:
         transaction-id:
           type: string
           format: uuid
           description: Unique transaction identifier
+        receiving-broker-id:
+          type: string
+          description: Identifier of the receiving broker-dealer
+        delivering-broker-id:
+          type: string
+          description: Identifier of the delivering broker-dealer
         carrier-id:
           type: string
           description: Identifier of the insurance carrier
         policy-id:
           type: string
           description: Policy identifier
+        policy-details:
+          type: object
+          description: Detailed policy information for validation
+        broker-details:
+          type: object
+          description: Receiving broker information for validation
+        validation-requirements:
+          type: object
+          description: Specific validation requirements (licensing, appointments, suitability, etc.)
+        request-timestamp:
+          type: string
+          format: date-time
+          description: When the request was made
         validation-result:
           type: string
           enum: [approved, rejected]
-          description: Carrier validation result
+          description: Carrier validation result (for responses)
         rejection-reason:
           type: string
           description: Reason for rejection (if applicable)
@@ -236,7 +471,7 @@ components:
           description: When the response was received
         additional-data:
           type: object
-          description: Additional response data (open-ended)
+          description: Additional request/response data (open-ended)
 
     TransferNotification:
       type: object
@@ -340,23 +575,55 @@ components:
     StandardResponse:
       type: object
       required:
-        - success
+        - code
         - message
+        - transactionId
       properties:
-        success:
-          type: boolean
-          description: Whether the operation was successful
+        code:
+          type: string
+          description: |
+            Response code indicating the result status.
+            Examples: "RECEIVED", "PROCESSING", "DEFERRED", "SUCCESS", "ERROR"
         message:
           type: string
-          description: Response message
-        transaction-id:
+          description: Human-readable response message describing the operation result
+        transactionId:
           type: string
           format: uuid
-          description: Transaction identifier
-        processing-status:
+          description: |
+            Unique transaction identifier for tracking the request.
+            - For broker responses: Must reflect the transactionId received from clearinghouse
+            - For clearinghouse responses: Always provided for deferred processing tracking
+        payload:
+          type: object
+          description: |
+            Optional response payload containing the actual data.
+            **Payload Behavior:**
+            - **Broker responses**: May include payload for immediate responses, omitted for deferred processing
+            - **Clearinghouse responses**: Never included - always deferred processing only
+            - When present, contains the specific response data (e.g., PolicyInquiryResponse for policy queries)
+      example:
+        code: "DEFERRED"
+        message: "Policy inquiry request received and queued for processing"
+        transactionId: "123e4567-e89b-12d3-a456-426614174000"
+        payload: null
+
+    PolicyError:
+      type: object
+      required:
+        - error-code
+        - message
+      properties:
+        error-code:
           type: string
-          enum: [received, processing, deferred]
-          description: How the request will be handled
+          enum: [ssn-contract-mismatch, proprietary-product, policy-inactive, policy-restricted]
+          description: Specific error code identifying the type of error
+        message:
+          type: string
+          description: Human-readable error message
+      example:
+        error-code: "ssn-contract-mismatch"
+        message: "Client's SSN does not match the contract on file"
 
     ErrorResponse:
       type: object
@@ -382,7 +649,7 @@ components:
 
   # Note: Outbound API calls that broker-dealers make to clearinghouse are documented separately
   # These would include:
-  # - POST to clearinghouse /receive-manifest-request (from receiving broker)
-  # - POST to clearinghouse /receive-manifest-response (from delivering broker)
+  # - POST to clearinghouse /submit-policy-inquiry-request (from receiving broker)
+  # - POST to clearinghouse /submit-policy-inquiry-response (from delivering broker)
   # - POST to clearinghouse /receive-bd-change-request (from receiving broker)
   # - POST to clearinghouse /receive-transfer-confirmation (from delivering broker)
