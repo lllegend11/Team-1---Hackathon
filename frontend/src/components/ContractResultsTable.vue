@@ -163,13 +163,19 @@ function getStatusBadgeType(status: ContractStatus): 'green' | 'yellow' | 'red' 
 							{{ record.ownership }}
 						</td>
 						<td class="px-6 py-4">
-							{{ record.trailing ? 'Yes' : 'No' }}
+							<span class="flex items-center">
+								<span :class="['flex w-3 h-3 me-3 rounded-full', record.trailing ? 'bg-green-500' : 'bg-red-500']"></span>
+								{{ record.trailing ? 'Yes' : 'No' }}
+							</span>
 						</td>
 						<td class="px-6 py-4">
-							{{ record.withdrawalProgram ? 'Yes' : 'No' }}
+							<span class="flex items-center">
+								<span :class="['flex w-3 h-3 me-3 rounded-full', record.withdrawalProgram ? 'bg-green-500' : 'bg-red-500']"></span>
+								{{ record.withdrawalProgram ? 'Yes' : 'No' }}
+							</span>
 						</td>
 						<td class="px-6 py-4">
-							<FwbBadge :type="getStatusBadgeType(record.contractStatus)">
+							<FwbBadge :type="getStatusBadgeType(record.contractStatus)" class="inline-flex rounded-full">
 								{{ record.contractStatus }}
 							</FwbBadge>
 						</td>

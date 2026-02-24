@@ -10,7 +10,7 @@ import { storeToRefs } from 'pinia';
 
 const contractResultsStore = useContractResultsStore()
 
-const { searchContracts } = storeToRefs(contractResultsStore)
+const { searchContracts, clientSearch } = storeToRefs(contractResultsStore)
 
 if (searchContracts.value.length === 0) {
 	contractResultsStore.addSearchContract()
@@ -24,7 +24,7 @@ if (searchContracts.value.length === 0) {
 		<div class="p-10 bg-[#f8f8f8] rounded-xl mb-4">
 			<div class="flex flex-wrap *:p-4 items-center">
 				<div class="w-1/3">
-					<FwbInput label="First Name">
+					<FwbInput v-model="clientSearch.firstName" label="First Name">
 						<template #prefix>
 							<UserIcon />
 						</template>
@@ -32,7 +32,7 @@ if (searchContracts.value.length === 0) {
 				</div>
 
 				<div class="w-1/3">
-					<FwbInput label="First Name">
+					<FwbInput v-model="clientSearch.lastName" label="Last Name">
 						<template #prefix>
 							<UserIcon />
 						</template>
@@ -40,7 +40,7 @@ if (searchContracts.value.length === 0) {
 				</div>
 
 				<div class="w-1/3">
-					<FwbInput label="First Name">
+					<FwbInput v-model="clientSearch.ssn" label="SSN">
 						<template #prefix>
 							<ProfileCardIcon />
 						</template>
