@@ -165,6 +165,78 @@ Returned by the Delivering Broker/Dealer through DTCC to the Receiving Firm.
 
 ---
 
+## Error Catalog
+
+Errors are returned at the individual policy level within the `errors` array. A policy may have multiple errors. When errors are present, policy detail fields may be null or incomplete.
+
+| Error Code | Message | Description |
+|------------|---------|-------------|
+| `ssn-contract-mismatch` | Client's SSN does not match the contract on file | The SSN provided in the request does not match the delivering firm's records for that contract number |
+| `proprietary-product` | Contract {contract-number} is a proprietary product | The product is proprietary to the delivering firm and is not eligible for transfer |
+| `policy-inactive` | Policy is inactive | The contract is no longer active (e.g., surrendered, matured, lapsed) |
+| `policy-restricted` | Policy is restricted for the following reason: {restriction-reason} | The policy has a restriction that prevents or limits the BD change process |
+
+### Example — Mixed Results
+
+```json
+"policies": {
+  "ABC123": {
+    "carrier-name": null,
+    "account-type": null,
+    "plan-type": null,
+    "ownership": null,
+    "product-name": null,
+    "cusip": null,
+    "trailing-commission": false,
+    "contract-status": null,
+    "withdrawal-structure": {
+      "systematic-in-place": false
+    },
+    "errors": [
+      {
+        "error-code": "ssn-contract-mismatch",
+        "message": "Client's SSN does not match the contract on file"
+      }
+    ]
+  },
+  "DEF456": {
+    "carrier-name": "Pacific Life",
+    "account-type": "individual",
+    "plan-type": "non-qualified",
+    "ownership": "single",
+    "product-name": "Pacific Destinations",
+    "cusip": "694308AB1",
+    "trailing-commission": true,
+    "contract-status": "active",
+    "withdrawal-structure": {
+      "systematic-in-place": false
+    },
+    "errors": []
+  },
+  "GHI789": {
+    "carrier-name": "Nationwide",
+    "account-type": "individual",
+    "plan-type": "traditional-ira",
+    "ownership": null,
+    "product-name": null,
+    "cusip": null,
+    "trailing-commission": false,
+    "contract-status": "surrendered",
+    "withdrawal-structure": {
+      "systematic-in-place": false
+    },
+    "errors": [
+      {
+        "error-code": "policy-inactive",
+        "message": "Policy is inactive"
+      }
+    ]
+  }
+}
+```
+
+---
+
 ## Sequence Context
 
 This request/response pair covers Steps 1 and 2 of the broader BD Change Process. After the Receiving Firm reviews the returned policy details (Step 3 — Due Diligence), in-scope policies proceed to Step 4 where individual BD Change Requests are sent to each carrier for validation.

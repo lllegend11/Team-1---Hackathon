@@ -231,14 +231,18 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+        broker-role:
+          type: string
+          enum: [receiving, delivering]
+          description: Role of this broker in the transaction (broker-dealer context)
         carrier-validation-details:
           type: object
-          description: Details about carrier validation process
+          description: Details about carrier validation process (insurance carrier context)
         policies-affected:
           type: array
           items:
             type: string
-          description: List of policy IDs affected in this transaction
+          description: List of policy IDs affected in this transaction (insurance carrier context)
         additional-data:
           type: object
           description: Additional status data (open-ended)

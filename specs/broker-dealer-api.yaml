@@ -97,7 +97,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BdChangeResponse'
+              $ref: '#/components/schemas/BdChangeRequest'
       responses:
         '200':
           description: BD change request received successfully
@@ -274,7 +274,7 @@ components:
                 policies:
                   type: object
                   additionalProperties:
-                    $ref: '#/components/schemas/PolicyDetails'
+                    $ref: '#/components/schemas/DetailedPolicyInfo'
                   description: Contract-number-keyed map of policy details
             enums:
               type: object
@@ -295,7 +295,7 @@ components:
                     enum: [non-qualified, roth-ira, traditional-ira, sep, simple]
                   description: Valid plan type values
 
-    PolicyDetails:
+    DetailedPolicyInfo:
       type: object
       required:
         - carrier-name
@@ -353,7 +353,7 @@ components:
         errors:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/PolicyError'
           description: Any errors or issues associated with this policy
 
     ManifestRequest:
@@ -417,28 +417,48 @@ components:
                     type: string
                   description: List of contract numbers for the client
 
-    BdChangeResponse:
+    BdChangeRequest:
       type: object
       required:
         - transaction-id
+        - receiving-broker-id
+        - delivering-broker-id
         - carrier-id
         - policy-id
-        - validation-result
       properties:
         transaction-id:
           type: string
           format: uuid
           description: Unique transaction identifier
+        receiving-broker-id:
+          type: string
+          description: Identifier of the receiving broker-dealer
+        delivering-broker-id:
+          type: string
+          description: Identifier of the delivering broker-dealer
         carrier-id:
           type: string
           description: Identifier of the insurance carrier
         policy-id:
           type: string
           description: Policy identifier
+        policy-details:
+          type: object
+          description: Detailed policy information for validation
+        broker-details:
+          type: object
+          description: Receiving broker information for validation
+        validation-requirements:
+          type: object
+          description: Specific validation requirements (licensing, appointments, suitability, etc.)
+        request-timestamp:
+          type: string
+          format: date-time
+          description: When the request was made
         validation-result:
           type: string
           enum: [approved, rejected]
-          description: Carrier validation result
+          description: Carrier validation result (for responses)
         rejection-reason:
           type: string
           description: Reason for rejection (if applicable)
@@ -451,7 +471,7 @@ components:
           description: When the response was received
         additional-data:
           type: object
-          description: Additional response data (open-ended)
+          description: Additional request/response data (open-ended)
 
     TransferNotification:
       type: object
@@ -587,6 +607,23 @@ components:
         message: "Policy inquiry request received and queued for processing"
         transactionId: "123e4567-e89b-12d3-a456-426614174000"
         payload: null
+
+    PolicyError:
+      type: object
+      required:
+        - error-code
+        - message
+      properties:
+        error-code:
+          type: string
+          enum: [ssn-contract-mismatch, proprietary-product, policy-inactive, policy-restricted]
+          description: Specific error code identifying the type of error
+        message:
+          type: string
+          description: Human-readable error message
+      example:
+        error-code: "ssn-contract-mismatch"
+        message: "Client's SSN does not match the contract on file"
 
     ErrorResponse:
       type: object
