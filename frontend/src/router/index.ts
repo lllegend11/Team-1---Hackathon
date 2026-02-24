@@ -10,6 +10,14 @@ const router = createRouter({
 		{
 			path: '/initiate-exchange',
 			component: () => import('@/pages/InitiateExchange.vue')
+		},
+		{
+			path: '/carrier-admin',
+			component: () => import('@/pages/carrier/CarrierAdmin.vue')
+		},
+		{
+			path: '/carrier-admin/:carrier',
+			component: () => import('@/pages/carrier/CarrierAdmin.vue')
 		}
 	],
 })
