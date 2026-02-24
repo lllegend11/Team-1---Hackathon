@@ -9,9 +9,32 @@
 /* add Flowbite Vue directory using @source directive. */
 @source "../node_modules/flowbite-vue";
 
-/* input.css */
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (false);
 
-html.dark {
-	background-color: #1B1B1F;
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+	transition: all 0.3s ease-in-out;
+	transform-origin: top;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+	opacity: 0;
+	transform: scaleY(0) translateY(-10px);
+}
+
+.slide-enter-to,
+.slide-leave-from {
+	opacity: 1;
+	transform: scaleY(1) translateY(0);
 }
