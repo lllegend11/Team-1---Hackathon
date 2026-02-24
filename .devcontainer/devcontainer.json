@@ -1,0 +1,19 @@
+{
+  "name": "Vue 3 Frontend",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Vue.volar",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+		"vitest.explorer",
+		"EditorConfig.EditorConfig",
+		"bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  "forwardPorts": [5173], 
+  "postCreateCommand": "npm install",
+  "remoteUser": "node"
+}
