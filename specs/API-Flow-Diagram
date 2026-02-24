@@ -1,0 +1,88 @@
+sequenceDiagram
+    participant RBD as 🏢 Receiving<br/>Broker/Dealer
+    participant DTCC as 📡 DTCC
+    participant API as 🔍 Status<br/>API
+    participant DBD as 🏢 Delivering<br/>Broker/Dealer
+    participant CAR as 🏛️ Insurance<br/>Carrier
+
+    Note over RBD,CAR: BD Change Process for Producer Changes on Existing Annuities
+
+    rect rgb(227, 242, 253)
+        Note right of RBD: Step 1 — Manifest Request
+        RBD->>+DTCC: Submit Manifest Request<br/>(Client account list)
+        DTCC->>API: 📌 Status: MANIFEST_REQUESTED
+        DTCC->>+DBD: Forward Manifest Request
+    end
+
+    rect rgb(255, 243, 224)
+        Note right of DBD: Step 2 — Policy List Response
+        DBD->>-DTCC: Return annuity & insurance<br/>policies in client accounts
+        DTCC->>API: 📌 Status: MANIFEST_RECEIVED
+        DTCC->>-RBD: Forward policy list
+    end
+
+    rect rgb(227, 242, 253)
+        Note right of RBD: Step 3 — Due Diligence
+        RBD->>RBD: Review policies<br/>Determine in-scope vs. out-of-scope
+        RBD->>API: 📌 Status: DUE_DILIGENCE_COMPLETE
+        Note right of RBD: Out-of-scope policies:<br/>No further action
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of RBD: Step 4 — BD Change Request to Carrier
+        loop For each in-scope policy
+            RBD->>+DTCC: Send BD Change Request<br/>(per carrier/policy)
+            DTCC->>API: 📌 Status: CARRIER_VALIDATION_PENDING
+            DTCC->>+CAR: Forward BD change request<br/>("Validate & approve this BD change")
+        end
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of CAR: Step 5 — Carrier Validates & Responds
+        CAR->>CAR: Validate BD change<br/>(licensing, appointments,<br/>suitability, policy rules)
+        alt Positive Response
+            CAR->>-DTCC: ✅ BD change validated & accepted
+            DTCC->>API: 📌 Status: CARRIER_APPROVED
+            DTCC->>-RBD: Forward acceptance
+            Note right of RBD: Receiving firm initiates<br/>formal transfer request
+            RBD->>+DTCC: Submit formal transfer request
+            DTCC->>API: 📌 Status: TRANSFER_INITIATED
+            DTCC->>DBD: Notify delivering firm<br/>(Transfer approved by carrier)
+        else Negative Response
+            CAR-->>DTCC: ❌ BD change rejected<br/>(with reason)
+            DTCC->>API: 📌 Status: CARRIER_REJECTED
+            DTCC-->>RBD: Forward rejection & reason
+            Note right of RBD: No further action<br/>for this policy
+        end
+    end
+
+    rect rgb(255, 243, 224)
+        Note right of DBD: Step 6 — Delivering Firm Notified & Processes
+        DBD->>DBD: Process outgoing transfer<br/>(Release — no approval needed)
+        DBD->>DTCC: Confirm outgoing transfer
+        DTCC->>API: 📌 Status: TRANSFER_PROCESSING
+    end
+
+    rect rgb(227, 242, 253)
+        Note right of RBD: Step 7 — Receiving Firm Confirmation
+        DTCC->>RBD: Transfer confirmation received
+        DTCC->>API: 📌 Status: TRANSFER_CONFIRMED
+    end
+
+    rect rgb(232, 245, 233)
+        Note right of CAR: Step 8 — Carrier Notification
+        DTCC->>CAR: Service agent change<br/>notification
+        DTCC->>API: 📌 Status: COMPLETE
+    end
+
+    Note over RBD,CAR: ✅ BD Change Complete — Producer reassigned on policy
+
+    rect rgb(240, 240, 255)
+        Note over API: Status API — Available to all parties at any time
+        RBD-->>API: Query transfer status
+        API-->>RBD: Return current status & history
+        DBD-->>API: Query transfer status
+        API-->>DBD: Return current status & history
+        CAR-->>API: Query transfer status
+        API-->>CAR: Return current status & history
+    end
