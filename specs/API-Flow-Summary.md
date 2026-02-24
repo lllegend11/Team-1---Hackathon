@@ -111,10 +111,9 @@ The APIs have been updated to support the detailed policy inquiry process with c
 ### New API Endpoints
 
 #### Broker-Dealer API Additions
-- `POST /submit-policy-inquiry-response` - Delivering broker submits policy details to clearinghouse
 - `POST /receive-policy-inquiry-response` - Receiving broker receives policy details from clearinghouse
 
-Both endpoints support the new nested response format with optional payload inclusion based on processing mode (immediate vs deferred).
+This endpoint supports the new nested response format with optional payload inclusion based on processing mode (immediate vs deferred).
 
 ## Response Pattern Examples
 
@@ -318,7 +317,8 @@ Both endpoints support the new nested response format with optional payload incl
 
 ### Broker-Dealer API  
 - `POST /submit-policy-inquiry-request` - From clearinghouse (delivering broker)
-- `POST /receive-bd-change-response` - From clearinghouse (receiving broker)
+- `POST /receive-policy-inquiry-response` - From clearinghouse (receiving broker)
+- `POST /receive-bd-change-request` - From clearinghouse (receiving broker)
 - `POST /receive-transfer-notification` - From clearinghouse
 - `GET /query-status/{transaction-id}` - Status queries
 

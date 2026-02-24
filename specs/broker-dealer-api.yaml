@@ -50,43 +50,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /submit-policy-inquiry-response:
-    post:
-      summary: Submit policy inquiry response to clearinghouse
-      description: |
-        Submit detailed policy information response to clearinghouse (delivering broker only).
-        This endpoint is called by the delivering broker to provide policy details in response to a policy inquiry request.
-        
-        **Response Behavior:**
-        - Broker submissions can include immediate policy data or indicate deferred processing
-        - Transaction ID received from clearinghouse must be included in the response
-      operationId: submitPolicyInquiryResponse
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PolicyInquiryResponse'
-      responses:
-        '200':
-          description: Policy inquiry response submitted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '400':
-          description: Bad request - invalid payload
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /receive-policy-inquiry-response:
     post:
       summary: Receive policy inquiry response from clearinghouse
@@ -124,11 +87,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /receive-bd-change-response:
+  /receive-bd-change-request:
     post:
-      summary: Receive BD change response from clearinghouse
-      description: Accept carrier validation response forwarded from clearinghouse (receiving broker only)
-      operationId: receiveBdChangeResponse
+      summary: Receive BD change request from clearinghouse
+      description: Accept BD change request forwarded from clearinghouse (receiving broker only)
+      operationId: receiveBdChangeRequest
       requestBody:
         required: true
         content:
@@ -137,7 +100,7 @@ paths:
               $ref: '#/components/schemas/BdChangeResponse'
       responses:
         '200':
-          description: BD change response received successfully
+          description: BD change request received successfully
           content:
             application/json:
               schema:
