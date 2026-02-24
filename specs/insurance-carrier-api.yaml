@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Insurance Carrier API
   description: API for insurance carriers to handle BD change validation requests and notifications in the BD change process
@@ -18,6 +18,14 @@ paths:
       summary: Receive BD change validation request from clearinghouse
       description: Accept BD change validation request from clearinghouse to validate and approve/reject broker-dealer changes
       operationId: receiveBdChangeRequest
+      parameters:
+        - name: transactionId
+          in: header
+          required: true
+          description: Unique transaction identifier that flows through all related requests
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -49,6 +57,14 @@ paths:
       summary: Receive transfer notification from clearinghouse
       description: Accept final service agent change notification from clearinghouse
       operationId: receiveTransferNotification
+      parameters:
+        - name: transactionId
+          in: header
+          required: true
+          description: Unique transaction identifier that flows through all related requests
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -75,13 +91,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /query-status/{transaction-id}:
+  /query-status/{transactionId}:
     get:
       summary: Query transaction status
       description: Retrieve current status and history for a specific transaction
       operationId: queryTransactionStatus
       parameters:
-        - name: transaction-id
+        - name: transactionId
           in: path
           required: true
           description: Unique transaction identifier
@@ -113,98 +129,83 @@ components:
     BdChangeRequest:
       type: object
       required:
-        - transaction-id
-        - receiving-broker-id
-        - delivering-broker-id
-        - carrier-id
-        - policy-id
+        - receivingBrokerId
+        - deliveringBrokerId
+        - carrierId
+        - policyNumber
       properties:
-        transaction-id:
-          type: string
-          format: uuid
-          description: Unique transaction identifier
-        receiving-broker-id:
+        receivingBrokerId:
           type: string
           description: Identifier of the receiving broker-dealer
-        delivering-broker-id:
+        deliveringBrokerId:
           type: string
           description: Identifier of the delivering broker-dealer
-        carrier-id:
+        carrierId:
           type: string
           description: Identifier of the insurance carrier
-        policy-id:
+        policyNumber:
           type: string
           description: Policy identifier
-        policy-details:
+        policyDetails:
           type: object
           description: Detailed policy information for validation
-        broker-details:
+        brokerDetails:
           type: object
           description: Receiving broker information for validation
-        validation-requirements:
+        validationRequirements:
           type: object
           description: Specific validation requirements (licensing, appointments, suitability, etc.)
-        request-timestamp:
+        requestTimestamp:
           type: string
           format: date-time
           description: When the request was made
-        additional-data:
+        additionalData:
           type: object
           description: Additional request data (open-ended)
 
     TransferNotification:
       type: object
       required:
-        - transaction-id
-        - notification-type
-        - policy-id
-        - carrier-id
+        - notificationType
+        - policyNumber
+        - carrierId
       properties:
-        transaction-id:
-          type: string
-          format: uuid
-          description: Unique transaction identifier
-        notification-type:
+        notificationType:
           type: string
           enum: [service-agent-change-complete]
           description: Type of transfer notification
-        policy-id:
+        policyNumber:
           type: string
           description: Policy identifier
-        carrier-id:
+        carrierId:
           type: string
           description: Identifier of the insurance carrier
-        receiving-broker-id:
+        receivingBrokerId:
           type: string
           description: Identifier of the new receiving broker-dealer
-        delivering-broker-id:
+        deliveringBrokerId:
           type: string
           description: Identifier of the previous delivering broker-dealer
-        effective-date:
+        effectiveDate:
           type: string
           format: date
           description: Effective date of the broker change
-        notification-timestamp:
+        notificationTimestamp:
           type: string
           format: date-time
           description: When the notification was sent
-        additional-data:
+        additionalData:
           type: object
           description: Additional notification data (open-ended)
 
     TransactionStatus:
       type: object
       required:
-        - transaction-id
-        - current-status
-        - created-at
-        - updated-at
+        - currentStatus
+        - createdAt
+        - updatedAt
       properties:
-        transaction-id:
-          type: string
-          format: uuid
-          description: Unique transaction identifier
-        current-status:
+        currentStatus:
           type: string
           enum: 
             - MANIFEST_REQUESTED
@@ -218,28 +219,32 @@ components:
             - TRANSFER_CONFIRMED
             - COMPLETE
           description: Current transaction status
-        status-history:
+        statusHistory:
           type: array
           items:
             $ref: '#/components/schemas/StatusHistoryItem'
           description: History of status changes
-        created-at:
+        createdAt:
           type: string
           format: date-time
           description: Transaction creation timestamp
-        updated-at:
+        updatedAt:
           type: string
           format: date-time
           description: Last update timestamp
-        carrier-validation-details:
+        brokerRole:
+          type: string
+          enum: [receiving, delivering]
+          description: Role of this broker in the transaction (broker-dealer context)
+        carrierValidationDetails:
           type: object
-          description: Details about carrier validation process
-        policies-affected:
+          description: Details about carrier validation process (insurance carrier context)
+        policiesAffected:
           type: array
           items:
             type: string
-          description: List of policy IDs affected in this transaction
-        additional-data:
+          description: List of policy IDs affected in this transaction (insurance carrier context)
+        additionalData:
           type: object
           description: Additional status data (open-ended)
 
@@ -263,48 +268,37 @@ components:
     StandardResponse:
       type: object
       required:
-        - success
+        - code
         - message
       properties:
-        success:
-          type: boolean
-          description: Whether the operation was successful
+        code:
+          type: string
+          description: Response code indicating the result status
+          example: "RECEIVED"
         message:
           type: string
-          description: Response message
-        transaction-id:
-          type: string
-          format: uuid
-          description: Transaction identifier
-        processing-status:
+          description: Human-readable response message describing the operation result
+        processingStatus:
           type: string
           enum: [received, processing, deferred]
           description: How the request will be handled
-        estimated-response-time:
+        estimatedResponseTime:
           type: string
           description: Estimated time for validation response (if deferred)
 
     ErrorResponse:
       type: object
       required:
-        - success
-        - error-code
-        - error-message
+        - code
+        - message
       properties:
-        success:
-          type: boolean
-          example: false
-          description: Always false for errors
-        error-code:
+        code:
           type: string
           description: Error code
-        error-message:
+          example: "VALIDATION_ERROR"
+        message:
           type: string
           description: Human-readable error message
-        transaction-id:
-          type: string
-          format: uuid
-          description: Transaction identifier (if available)
 
   # Note: Outbound API calls that carriers make to clearinghouse are documented separately
   # These would include:
@@ -312,17 +306,17 @@ components:
   #
   # Example carrier validation response payload that would be sent to clearinghouse:
   # {
-  #   "transaction-id": "uuid",
-  #   "carrier-id": "string",  
-  #   "policy-id": "string",
-  #   "validation-result": "approved|rejected",
-  #   "rejection-reason": "string (if rejected)",
-  #   "validation-details": {
-  #     "licensing-check": "passed|failed",
-  #     "appointment-check": "passed|failed", 
-  #     "suitability-check": "passed|failed",
-  #     "policy-rules-check": "passed|failed"
+  #   "transactionId": "uuid",
+  #   "carrierId": "string",  
+  #   "policyId": "string",
+  #   "validationResult": "approved|rejected",
+  #   "rejectionReason": "string (if rejected)",
+  #   "validationDetails": {
+  #     "licensingCheck": "passed|failed",
+  #     "appointmentCheck": "passed|failed", 
+  #     "suitabilityCheck": "passed|failed",
+  #     "policyRulesCheck": "passed|failed"
   #   },
-  #   "response-timestamp": "date-time",
-  #   "additional-data": {}
+  #   "responseTimestamp": "date-time",
+  #   "additionalData": {}
   # }

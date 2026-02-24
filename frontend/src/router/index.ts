@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useContractResultsStore } from '@/stores/useContractResultsStore'
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -9,7 +10,33 @@ const router = createRouter({
 		},
 		{
 			path: '/initiate-exchange',
-			component: () => import('@/pages/InitiateExchange.vue')
+			component: () => import('@/pages/InitiateExchange.vue'),
+			meta: {
+				next: '/dtcc-results'
+			}
+		},
+		{
+			path: '/dtcc-results',
+			component: () => import('@/pages/DtccResults.vue'),
+			meta: {
+				next: '/carrier-results',
+				previous: '/initiate-exchange'
+			},
+			beforeEnter: async () => {
+				const contractResultsStore = useContractResultsStore()
+				await contractResultsStore.initiateDtccSearch()
+			}
+		},
+		{
+			path: '/carrier-results',
+			component: () => import('@/pages/CarrierResults.vue'),
+			meta: {
+				previous: '/dtcc-results'
+			},
+			beforeEnter: async () => {
+				const contractResultsStore = useContractResultsStore()
+				await contractResultsStore.initiateCarrierSearch()
+			}
 		},
 		{
 			path: '/carrier-admin',

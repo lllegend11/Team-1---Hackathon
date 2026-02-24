@@ -287,8 +287,60 @@ This endpoint supports the new nested response format with optional payload incl
 
 ### Transaction Management
 - **Persistent Transaction ID**: UUID format used across all APIs
+- **Required Transaction Headers**: All POST endpoints require `transactionId` header parameter
 - **Status Tracking**: Complete status enum covering all diagram states
 - **History Tracking**: Full audit trail of status changes
+
+### Transaction ID Header Requirements
+
+All API POST endpoints require a `transactionId` header parameter for request tracking and correlation:
+
+```http
+POST /submit-policy-inquiry-request
+Content-Type: application/json
+transactionId: 123e4567-e89b-12d3-a456-426614174000
+
+{
+  "requestingFirm": { ... },
+  "client": { ... }
+}
+```
+
+#### Header Specification
+- **Parameter Name**: `transactionId`
+- **Location**: HTTP Header
+- **Required**: Yes (for all POST endpoints)
+- **Format**: UUID (string format)
+- **Description**: Unique transaction identifier that flows through all related requests
+
+#### Endpoints Requiring TransactionId Header
+**Clearinghouse API:**
+- `POST /submit-policy-inquiry-request` ✅
+- `POST /submit-policy-inquiry-response` ✅  
+- `POST /receive-bd-change-request` ✅
+- `POST /receive-carrier-response` ✅
+- `POST /receive-transfer-confirmation` ✅
+
+**Broker-Dealer API:**
+- `POST /submit-policy-inquiry-request` ✅
+- `POST /receive-policy-inquiry-response` ✅
+- `POST /receive-bd-change-request` ✅  
+- `POST /receive-transfer-notification` ✅
+
+**Insurance Carrier API:**
+- `POST /receive-bd-change-request` ✅
+- `POST /receive-transfer-notification` ✅
+
+#### Endpoints NOT Requiring TransactionId Header
+**All APIs:**
+- `GET /query-status/{transactionId}` - Transaction ID provided in URL path parameter instead
+
+#### Transaction ID Flow with Headers
+1. **Receiving Broker** submits request with `transactionId: "abc-123"` header
+2. **Clearinghouse** receives request, validates header, forwards with same `transactionId: "abc-123"`
+3. **Delivering Broker** processes request using `transactionId: "abc-123"` from header
+4. All subsequent requests in the flow must include the same `transactionId` header value
+5. Response payloads also include `transactionId` field for correlation
 
 ### Deferred Processing Support
 - **Immediate vs Deferred**: Responses can be processed immediately or deferred
